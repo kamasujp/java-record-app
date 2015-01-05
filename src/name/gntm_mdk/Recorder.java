@@ -35,7 +35,20 @@ public class Recorder {
     /** constructor
      * 
      */
+    @Deprecated
     public Recorder( String uri,LINE_TYPE lineType ){
+    	mLineType = lineType;
+    	if(null != uri){
+    		mWavFile = new File(uri);
+    	}
+    	initTargetDataLine();
+    }
+    
+    /** constructor
+     * 
+     */
+    // todo impl
+    public Recorder( String uri,String lineType ){
     	mLineType = lineType;
     	if(null != uri){
     		mWavFile = new File(uri);
@@ -49,7 +62,12 @@ public class Recorder {
     	}
     }
     
+    @Deprecated
     public void setLineType(LINE_TYPE lineType){
+    	mLineType = lineType;
+    }
+     // todo implement
+    public void setLineType(String lineType){
     	mLineType = lineType;
     }
     
