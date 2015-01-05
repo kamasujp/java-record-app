@@ -15,12 +15,11 @@ public class Recorder {
 		SYSTEM
 	};
 	LINE_TYPE mLineType;
-	String mUri;
     // record duration, in milliseconds
-    static final long RECORD_TIME = 6000;  // 0.1 minute
+    long mDuration = 6000; // 0.1 minute
  
-    // path of the wav file
-    File wavFile = new File("/Users/hiroki/RecordAudio.wav");
+    // path to wav file
+    File mWavFile = null;
  
     // format of audio file
     AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
@@ -31,17 +30,29 @@ public class Recorder {
     /** constructor
      * 
      */
-    public Recorder( String Uri,LINE_TYPE lineType ){
+    public Recorder( String uri,LINE_TYPE lineType ){
     	mLineType = lineType;
-    	mUri = Uri;
+    	if(null != uri){
+    		mWavFile = new File(uri);
+    	}
     }
     
-    public void setUri(String Uri){
-    	mUri = Uri;
+    public void setUri(String uri){
+    	if(null != uri){
+    		createFile(uri);
+    	}
     }
     
     public void setLineType(LINE_TYPE lineType){
     	mLineType = lineType;
+    }
+    
+    public void setDuration(long durationInSecond) {
+    	mDuration = durationInSecond;
+    }
+    
+    private void createFile(String uri){
+    	mWavFile = new File(uri);
     }
  
     /**
@@ -58,30 +69,57 @@ public class Recorder {
         return format;
     }
  
+    public void start(){
+		// creates a new thread that waits for a specified
+		// of time before stopping
+		Thread stopper = new Thread(new Runnable() {
+			public void run() {
+				try {
+					Thread.sleep(mDuration);
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
+				}
+				finish();
+			}
+		});
+
+		stopper.start();
+
+		// start recording
+		recStart();
+    }
     /**
      * Captures the sound and record into a WAV file
+     * @return success: 0  failed: -1
      */
-    void start() {
+    private int recStart() {
         try {
         	// format describes only WAV information
             AudioFormat format = getAudioFormat();
-            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-            // checks if system supports the data line
-            if (!AudioSystem.isLineSupported(info)) {
-                System.out.println("Line not supported");
-                System.exit(0);
+            DataLine.Info info;
+            switch(mLineType) {
+            case LINE_OUT:
+                if(!AudioSystem.isLineSupported(Port.Info.LINE_OUT)){
+                    System.out.println("Info.LINE_OUT is not supported");
+                    return -1;
+                }
+                line = (TargetDataLine) AudioSystem.getLine(Port.Info.LINE_OUT);
+            	break;
+            case SPEAKER:
+                if(!AudioSystem.isLineSupported(Port.Info.SPEAKER)){
+                    System.out.println("Info.Speaker is not supported");
+                    return -1;
+                }
+                line = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
+            	break;
+            default:
+           	    info = new DataLine.Info(TargetDataLine.class, format);
+           	    if (!AudioSystem.isLineSupported(info)) {
+                    System.out.println("Line not supported");
+                    return -1;
+           	    }
+            	line = (TargetDataLine) AudioSystem.getLine(info);
             }
-
-            if(!AudioSystem.isLineSupported(Port.Info.LINE_OUT)){
-                System.out.println("Info.LINE_OUT is not supported");
-            }
-            if(!AudioSystem.isLineSupported(Port.Info.SPEAKER)){
-                System.out.println("Info.Speaker is not supported");
-            }
-            
-//            line = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
-            
-            line = (TargetDataLine) AudioSystem.getLine(info);
             line.open(format);
             line.start();   // start capturing
  
@@ -92,13 +130,16 @@ public class Recorder {
             System.out.println("Start recording...");
  
             // start recording
-            AudioSystem.write(ais, fileType, wavFile);
+            AudioSystem.write(ais, fileType, mWavFile);
  
         } catch (LineUnavailableException ex) {
             ex.printStackTrace();
+            return -1;
         } catch (IOException ioe) {
             ioe.printStackTrace();
+            return -1;
         }
+        return 0;
     }
  
     /**
@@ -109,32 +150,4 @@ public class Recorder {
         line.close();
         System.out.println("Finished");
     }
- 
-    /**
-     * Entry to run the program
-     */
-    /**
-     * TODO: to call from external class method such as main()
-     */
-//    public static void main(String[] args) {
-//        final JavaSoundRecorder recorder = new JavaSoundRecorder();
-// 
-//        // creates a new thread that waits for a specified
-//        // of time before stopping
-//        Thread stopper = new Thread(new Runnable() {
-//            public void run() {
-//                try {
-//                    Thread.sleep(RECORD_TIME);
-//                } catch (InterruptedException ex) {
-//                    ex.printStackTrace();
-//                }
-//                recorder.finish();
-//            }
-//        });
-// 
-//        stopper.start();
-// 
-//        // start recording
-//        recorder.start();
-//    }
 }
