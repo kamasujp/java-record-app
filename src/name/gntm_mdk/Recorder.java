@@ -3,10 +3,12 @@ import javax.sound.sampled.*;
 import javax.xml.ws.handler.PortInfo;
 
 import java.io.*;
+import java.util.Hashtable;
  
 /**
  * A sample program is to demonstrate how to record sound in Java
- * author: www.codejava.net
+ * @author medaka.mp3@gmail.com
+ * refer: www.codejava.net
  */
 public class Recorder {
 	public enum LINE_TYPE {
@@ -88,6 +90,7 @@ public class Recorder {
 		// start recording
 		recStart();
     }
+    
     /**
      * Captures the sound and record into a WAV file
      * @return success: 0  failed: -1
@@ -150,4 +153,65 @@ public class Recorder {
         line.close();
         System.out.println("Finished");
     }
+    
+    // Experimental cord
+    private TargetDataLine getTargetDataLine() {
+        return getTargetDataLine( null );
+    }
+    private TargetDataLine getTargetDataLine( String aMixerName ) {
+        Hashtable<String,TargetDataLine> targetDataLineHash = new Hashtable<String,TargetDataLine>();
+        Mixer.Info[] mixerInfoList = AudioSystem.getMixerInfo();
+        for( Mixer.Info info : mixerInfoList ) {
+            //String name = info.getName();
+            //System.out.println( name );
+            Mixer mixer = AudioSystem.getMixer(info);
+            //System.out.println( mixer );
+            //for( Line.Info i : mixer.getSourceLineInfo() ) {
+            //  System.out.println( "- " + i ); // output
+            //}
+            for( Line.Info i : mixer.getTargetLineInfo() ) {
+                //System.out.println( "+ " + i ); // input
+                try {
+                    Line line = mixer.getLine(i);
+                    if( line instanceof TargetDataLine ) {
+                        //System.out.println( "\tOK" ); // input
+                        targetDataLineHash.put( info.getName(), (TargetDataLine)line );
+                    }
+                } catch ( LineUnavailableException e ) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        TargetDataLine line = null;
+        if( aMixerName != null && targetDataLineHash.containsKey( aMixerName ) ) {
+            line = targetDataLineHash.get( aMixerName );
+        } else {
+            System.out.println( "使用可能なデバイス一覧" );
+            Object[] mixerNames = targetDataLineHash.keySet().toArray();
+            for( int i = 0; i < mixerNames.length; i++ ) {
+                System.out.println( " " + i + ". " + mixerNames[i] );
+            }
+            System.out.print( "使用するデバイスの番号を入力してください: " );
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            int number = 0;
+            try {
+                do {
+                    String n = br.readLine();
+                    number = Integer.parseInt(n);
+                    if( number < 0 || mixerNames.length <= number ) {
+                        System.out.println( "入力された値の範囲が無効です. 再度入力してください: " );
+                    } else {
+                        break;
+                    }
+                } while(true);
+            } catch( Exception e ) {
+                System.err.println( "エラーが発生したので 0 番に設定します." );
+                number = 0;
+            }
+            line = targetDataLineHash.get( mixerNames[number] );
+        }
+        return line;
+    }
+    
 }
