@@ -9,6 +9,13 @@ import java.io.*;
  * author: www.codejava.net
  */
 public class Recorder {
+	public enum LINE_TYPE {
+		LINE_OUT,
+		SPEAKER,
+		SYSTEM
+	};
+	LINE_TYPE mLineType;
+	String mUri;
     // record duration, in milliseconds
     static final long RECORD_TIME = 6000;  // 0.1 minute
  
@@ -20,6 +27,22 @@ public class Recorder {
  
     // the line from which audio data is captured
     TargetDataLine line;
+    
+    /** constructor
+     * 
+     */
+    public Recorder( String Uri,LINE_TYPE lineType ){
+    	mLineType = lineType;
+    	mUri = Uri;
+    }
+    
+    public void setUri(String Uri){
+    	mUri = Uri;
+    }
+    
+    public void setLineType(LINE_TYPE lineType){
+    	mLineType = lineType;
+    }
  
     /**
      * Defines an audio format
