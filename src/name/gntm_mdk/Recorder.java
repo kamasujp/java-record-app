@@ -16,10 +16,9 @@ public class Recorder {
 	};
 	LINE_TYPE mLineType;
     // record duration, in milliseconds
-    static final long RECORD_TIME = 6000;  // 0.1 minute
+    long mDuration = 6000; // 0.1 minute
  
-    // path of the wav file
-    File wavFile = new File("/Users/hiroki/RecordAudio.wav");
+    // path to wav file
     File mWavFile = null;
  
     // format of audio file
@@ -48,6 +47,10 @@ public class Recorder {
     	mLineType = lineType;
     }
     
+    public void setDuration(long durationInSecond) {
+    	mDuration = durationInSecond;
+    }
+    
     private void createFile(String uri){
     	mWavFile = new File(uri);
     }
@@ -66,10 +69,30 @@ public class Recorder {
         return format;
     }
  
+    public void start(){
+		// creates a new thread that waits for a specified
+		// of time before stopping
+		Thread stopper = new Thread(new Runnable() {
+			public void run() {
+				try {
+					Thread.sleep(mDuration);
+				} catch (InterruptedException ex) {
+					ex.printStackTrace();
+				}
+				finish();
+			}
+		});
+
+		stopper.start();
+
+		// start recording
+		recStart();
+    }
     /**
      * Captures the sound and record into a WAV file
+     * @return success: 0  failed: -1
      */
-    void start() {
+    private int recStart() {
         try {
         	// format describes only WAV information
             AudioFormat format = getAudioFormat();
@@ -100,13 +123,16 @@ public class Recorder {
             System.out.println("Start recording...");
  
             // start recording
-            AudioSystem.write(ais, fileType, wavFile);
+            AudioSystem.write(ais, fileType, mWavFile);
  
         } catch (LineUnavailableException ex) {
             ex.printStackTrace();
+            return -1;
         } catch (IOException ioe) {
             ioe.printStackTrace();
+            return -1;
         }
+        return 0;
     }
  
     /**
@@ -117,32 +143,4 @@ public class Recorder {
         line.close();
         System.out.println("Finished");
     }
- 
-    /**
-     * Entry to run the program
-     */
-    /**
-     * TODO: to call from external class method such as main()
-     */
-//    public static void main(String[] args) {
-//        final JavaSoundRecorder recorder = new JavaSoundRecorder();
-// 
-//        // creates a new thread that waits for a specified
-//        // of time before stopping
-//        Thread stopper = new Thread(new Runnable() {
-//            public void run() {
-//                try {
-//                    Thread.sleep(RECORD_TIME);
-//                } catch (InterruptedException ex) {
-//                    ex.printStackTrace();
-//                }
-//                recorder.finish();
-//            }
-//        });
-// 
-//        stopper.start();
-// 
-//        // start recording
-//        recorder.start();
-//    }
 }
