@@ -2,6 +2,7 @@ package name.gntm_mdk;
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
+import java.awt.Dialog;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -140,7 +141,7 @@ public class RecordMain extends Frame implements ActionListener{
 		}
 		add(mMinuteChoice);
 
-		Checkbox checkBox = new Checkbox("Immediately");
+		final Checkbox checkBox = new Checkbox("Immediately");
 		checkBox.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -167,6 +168,9 @@ public class RecordMain extends Frame implements ActionListener{
 		recordButton.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				if (checkBox.getState()){
+					showDialog("録音を開始します。");
+				}
 				mRecorder.start();
 			}
 		});
@@ -217,6 +221,10 @@ public class RecordMain extends Frame implements ActionListener{
 		} catch (IOException e1) {
 			System.out.println("save failed : IO blocked");
 		}
+		
+
+		mRecorder.setUri(prop.getProperty(SETTING_KEY_URI));
+		mRecorder.setLineType(fromOrdinal(Recorder.LINE_TYPE.class, Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE))));
 	}
 	private Recorder load(){
 		try {
@@ -239,6 +247,13 @@ public class RecordMain extends Frame implements ActionListener{
 	public static <E extends Enum<E>> E fromOrdinal(Class<E> enumClass, int ordinal) {
 		E[] enumArray = enumClass.getEnumConstants();
 		return enumArray[ordinal];
+	}
+	
+	public static void showDialog (String sentence){
+		/*
+        Dialog alert = new Dialog(new Frame() , "確認");
+        alert.setVisible(true);
+        */
 	}
 
 }
