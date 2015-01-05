@@ -11,12 +11,16 @@ import java.util.Hashtable;
  * refer: www.codejava.net
  */
 public class Recorder {
+	@Deprecated
 	public enum LINE_TYPE {
 		LINE_OUT,
 		SPEAKER,
-		SYSTEM
+		SYSTEM,
+		NONE
 	};
-	LINE_TYPE mLineType;
+	@Deprecated
+	LINE_TYPE mLineType = LINE_TYPE.NONE;
+	String mLineName = null;
     // record duration, in milliseconds
     long mDuration = 6000; // 0.1 minute
  
@@ -27,13 +31,15 @@ public class Recorder {
     AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
  
     // the line from which audio data is captured
-    TargetDataLine line;
+    TargetDataLine mLine;
     
     // contains available device list
     Hashtable<String,TargetDataLine> mTargetDataLineHash;
     
-    /** constructor
-     * 
+    /** 
+     * constructor. 
+     * this method is deprecated due to the issue #1.
+     * @see also issue #1
      */
     @Deprecated
     public Recorder( String uri,LINE_TYPE lineType ){
@@ -44,12 +50,13 @@ public class Recorder {
     	initTargetDataLine();
     }
     
-    /** constructor
-     * 
+    /** 
+     * constructor
+     * @param uri contains the location to save wave file.
+     * @lineType is the name of an audio device. This can be got from getTargetDataLine()
      */
-    // todo impl
     public Recorder( String uri,String lineType ){
-    	mLineType = lineType;
+    	mLineName = lineType;
     	if(null != uri){
     		mWavFile = new File(uri);
     	}
@@ -66,9 +73,13 @@ public class Recorder {
     public void setLineType(LINE_TYPE lineType){
     	mLineType = lineType;
     }
-     // todo implement
+    
+    /**
+     * setter
+     * @param lineType is the name of an audio device. This can be got from getTargetDataLine()
+     */
     public void setLineType(String lineType){
-    	mLineType = lineType;
+    	mLineName = lineType;
     }
     
     public void setDuration(long durationInSecond) {
@@ -121,6 +132,8 @@ public class Recorder {
         try {
         	// format describes only WAV information
             AudioFormat format = getAudioFormat();
+            
+            // todo:delete START ----
             DataLine.Info info;
             switch(mLineType) {
             case LINE_OUT:
@@ -128,29 +141,41 @@ public class Recorder {
                     System.out.println("Info.LINE_OUT is not supported");
                     return -1;
                 }
-                line = (TargetDataLine) AudioSystem.getLine(Port.Info.LINE_OUT);
+                mLine = (TargetDataLine) AudioSystem.getLine(Port.Info.LINE_OUT);
             	break;
             case SPEAKER:
                 if(!AudioSystem.isLineSupported(Port.Info.SPEAKER)){
                     System.out.println("Info.Speaker is not supported");
                     return -1;
                 }
-                line = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
+                mLine = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
             	break;
-            default:
+            case SYSTEM:
            	    info = new DataLine.Info(TargetDataLine.class, format);
            	    if (!AudioSystem.isLineSupported(info)) {
                     System.out.println("Line not supported");
                     return -1;
            	    }
-            	line = (TargetDataLine) AudioSystem.getLine(info);
+            	mLine = (TargetDataLine) AudioSystem.getLine(info);
+            	break;
+            default: 
+            	// do nothing when type is NONE
             }
-            line.open(format);
-            line.start();   // start capturing
+            // todo: delete END ---
+            if( mLineName != null && mTargetDataLineHash.containsKey( mLineName ) ) {
+                mLine = mTargetDataLineHash.get( mLineName );
+            } else if(mTargetDataLineHash != null && !mTargetDataLineHash.isEmpty()){
+            	String[] array = (String[])mTargetDataLineHash.keySet().toArray();
+            	mLine = mTargetDataLineHash.get(array[0]);
+            } else {
+            	return -1;
+            }
+            mLine.open(format);
+            mLine.start();   // start capturing
  
             System.out.println("Start capturing...");
  
-            AudioInputStream ais = new AudioInputStream(line);
+            AudioInputStream ais = new AudioInputStream(mLine);
  
             System.out.println("Start recording...");
  
@@ -171,8 +196,8 @@ public class Recorder {
      * Closes the target data line to finish capturing and recording
      */
     void finish() {
-        line.stop();
-        line.close();
+        mLine.stop();
+        mLine.close();
         System.out.println("Finished");
     }
     
