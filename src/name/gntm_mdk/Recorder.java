@@ -96,23 +96,30 @@ public class Recorder {
         try {
         	// format describes only WAV information
             AudioFormat format = getAudioFormat();
-            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-            // checks if system supports the data line
-            if (!AudioSystem.isLineSupported(info)) {
-                System.out.println("Line not supported");
-                System.exit(0);
+            DataLine.Info info;
+            switch(mLineType) {
+            case LINE_OUT:
+                if(!AudioSystem.isLineSupported(Port.Info.LINE_OUT)){
+                    System.out.println("Info.LINE_OUT is not supported");
+                    return -1;
+                }
+                line = (TargetDataLine) AudioSystem.getLine(Port.Info.LINE_OUT);
+            	break;
+            case SPEAKER:
+                if(!AudioSystem.isLineSupported(Port.Info.SPEAKER)){
+                    System.out.println("Info.Speaker is not supported");
+                    return -1;
+                }
+                line = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
+            	break;
+            default:
+           	    info = new DataLine.Info(TargetDataLine.class, format);
+           	    if (!AudioSystem.isLineSupported(info)) {
+                    System.out.println("Line not supported");
+                    return -1;
+           	    }
+            	line = (TargetDataLine) AudioSystem.getLine(info);
             }
-
-            if(!AudioSystem.isLineSupported(Port.Info.LINE_OUT)){
-                System.out.println("Info.LINE_OUT is not supported");
-            }
-            if(!AudioSystem.isLineSupported(Port.Info.SPEAKER)){
-                System.out.println("Info.Speaker is not supported");
-            }
-            
-//            line = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
-            
-            line = (TargetDataLine) AudioSystem.getLine(info);
             line.open(format);
             line.start();   // start capturing
  
