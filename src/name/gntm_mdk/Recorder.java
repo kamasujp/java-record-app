@@ -15,12 +15,12 @@ public class Recorder {
 		SYSTEM
 	};
 	LINE_TYPE mLineType;
-	String mUri;
     // record duration, in milliseconds
     static final long RECORD_TIME = 6000;  // 0.1 minute
  
     // path of the wav file
     File wavFile = new File("/Users/hiroki/RecordAudio.wav");
+    File mWavFile = null;
  
     // format of audio file
     AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
@@ -31,17 +31,25 @@ public class Recorder {
     /** constructor
      * 
      */
-    public Recorder( String Uri,LINE_TYPE lineType ){
+    public Recorder( String uri,LINE_TYPE lineType ){
     	mLineType = lineType;
-    	mUri = Uri;
+    	if(null != uri){
+    		mWavFile = new File(uri);
+    	}
     }
     
-    public void setUri(String Uri){
-    	mUri = Uri;
+    public void setUri(String uri){
+    	if(null != uri){
+    		createFile(uri);
+    	}
     }
     
     public void setLineType(LINE_TYPE lineType){
     	mLineType = lineType;
+    }
+    
+    private void createFile(String uri){
+    	mWavFile = new File(uri);
     }
  
     /**
