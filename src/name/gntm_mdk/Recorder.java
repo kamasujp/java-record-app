@@ -29,6 +29,9 @@ public class Recorder {
     // the line from which audio data is captured
     TargetDataLine line;
     
+    // contains available device list
+    Hashtable<String,TargetDataLine> mTargetDataLineHash;
+    
     /** constructor
      * 
      */
@@ -37,6 +40,7 @@ public class Recorder {
     	if(null != uri){
     		mWavFile = new File(uri);
     	}
+    	initTargetDataLine();
     }
     
     public void setUri(String uri){
@@ -154,12 +158,11 @@ public class Recorder {
         System.out.println("Finished");
     }
     
-    // Experimental cord
-    private TargetDataLine getTargetDataLine() {
-        return getTargetDataLine( null );
-    }
-    private TargetDataLine getTargetDataLine( String aMixerName ) {
-        Hashtable<String,TargetDataLine> targetDataLineHash = new Hashtable<String,TargetDataLine>();
+    /**
+     * creates mTargetDataLineHash.
+     */
+    private void initTargetDataLine( ) {
+        mTargetDataLineHash = new Hashtable<String,TargetDataLine>();
         Mixer.Info[] mixerInfoList = AudioSystem.getMixerInfo();
         for( Mixer.Info info : mixerInfoList ) {
             //String name = info.getName();
@@ -175,43 +178,26 @@ public class Recorder {
                     Line line = mixer.getLine(i);
                     if( line instanceof TargetDataLine ) {
                         //System.out.println( "\tOK" ); // input
-                        targetDataLineHash.put( info.getName(), (TargetDataLine)line );
+                        mTargetDataLineHash.put( info.getName(), (TargetDataLine)line );
                     }
                 } catch ( LineUnavailableException e ) {
                     e.printStackTrace();
                 }
             }
         }
-
-        TargetDataLine line = null;
-        if( aMixerName != null && targetDataLineHash.containsKey( aMixerName ) ) {
-            line = targetDataLineHash.get( aMixerName );
-        } else {
-            System.out.println( "使用可能なデバイス一覧" );
-            Object[] mixerNames = targetDataLineHash.keySet().toArray();
-            for( int i = 0; i < mixerNames.length; i++ ) {
-                System.out.println( " " + i + ". " + mixerNames[i] );
-            }
-            System.out.print( "使用するデバイスの番号を入力してください: " );
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            int number = 0;
-            try {
-                do {
-                    String n = br.readLine();
-                    number = Integer.parseInt(n);
-                    if( number < 0 || mixerNames.length <= number ) {
-                        System.out.println( "入力された値の範囲が無効です. 再度入力してください: " );
-                    } else {
-                        break;
-                    }
-                } while(true);
-            } catch( Exception e ) {
-                System.err.println( "エラーが発生したので 0 番に設定します." );
-                number = 0;
-            }
-            line = targetDataLineHash.get( mixerNames[number] );
+        System.out.println( "supported devices:" );
+        for(String name : mTargetDataLineHash.keySet()){
+        	System.out.println(name);
         }
-        return line;
+    }
+    
+    /**
+     * gets an array that contains supported device name.
+     * @return names
+     */
+    public String[] getTargetDataLine() {
+    	String[] names = (String[]) mTargetDataLineHash.keySet().toArray();
+    	return names;
     }
     
 }
