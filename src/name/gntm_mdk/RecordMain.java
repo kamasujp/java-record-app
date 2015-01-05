@@ -167,7 +167,7 @@ public class RecordMain extends Frame implements ActionListener{
 		recordButton.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				selectURI();
+				mRecorder.start();
 			}
 		});
 		add(recordButton);
