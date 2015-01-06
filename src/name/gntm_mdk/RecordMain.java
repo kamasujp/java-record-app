@@ -183,21 +183,22 @@ public class RecordMain extends Frame implements ActionListener{
 		Choice durationChoice = new Choice();
 		int selected = 0;
 		int defaultDuration = Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION));
+		int now = 0;
 		for(int d = 15; d < 60; d+=15){
 			durationChoice.add(String.valueOf(d).concat(" mins"));
 			if (d == defaultDuration){
-				// TODO: here
-				//selected = ;
+				selected = now;
 			}
+			now ++;
 		}
 		for(int d = 60; d <= 300; d+=60){
 			durationChoice.add(String.valueOf(d).concat(" mins"));
 			if (d == defaultDuration){
-				selected = d;
+				selected = now;
 			}
+			now ++;
 		}
 		durationChoice.select(selected);
-		//durationChoice.add("infinite");
 		add(durationChoice);
 		durationChoice.addItemListener(new ItemListener() {
 			@Override
