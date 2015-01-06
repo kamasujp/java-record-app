@@ -63,6 +63,7 @@ public class Recorder {
     	}
     	initTargetDataLine();
     }
+    
 
     /** 
      * constructor
@@ -198,6 +199,13 @@ public class Recorder {
             return -1;
         }
         return 0;
+    }
+    
+    /**
+     * stops recording.
+     */
+    public void stop() {
+    	finish();
     }
  
     /**
