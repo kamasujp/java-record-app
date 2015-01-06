@@ -11,12 +11,16 @@ import java.util.Hashtable;
  * refer: www.codejava.net
  */
 public class Recorder {
+	@Deprecated
 	public enum LINE_TYPE {
 		LINE_OUT,
 		SPEAKER,
-		SYSTEM
+		SYSTEM,
+		NONE
 	};
-	LINE_TYPE mLineType;
+	@Deprecated
+	LINE_TYPE mLineType = LINE_TYPE.NONE;
+	String mLineName = null;
     // record duration, in milliseconds
     long mDuration = 6000; // 0.1 minute
  
@@ -27,16 +31,36 @@ public class Recorder {
     AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
  
     // the line from which audio data is captured
-    TargetDataLine line;
+    TargetDataLine mLine;
     
-    /** constructor
-     * 
+    // contains available device list
+    Hashtable<String,TargetDataLine> mTargetDataLineHash;
+    
+    /** 
+     * constructor. 
+     * this method is deprecated due to the issue #1.
+     * @see also issue #1
      */
+    @Deprecated
     public Recorder( String uri,LINE_TYPE lineType ){
     	mLineType = lineType;
     	if(null != uri){
     		mWavFile = new File(uri);
     	}
+    	initTargetDataLine();
+    }
+    
+    /** 
+     * constructor
+     * @param uri contains the location to save wave file.
+     * @lineType is the name of an audio device. This can be got from getTargetDataLine()
+     */
+    public Recorder( String uri,String lineType ){
+    	mLineName = lineType;
+    	if(null != uri){
+    		mWavFile = new File(uri);
+    	}
+    	initTargetDataLine();
     }
     
     public void setUri(String uri){
@@ -45,8 +69,17 @@ public class Recorder {
     	}
     }
     
+    @Deprecated
     public void setLineType(LINE_TYPE lineType){
     	mLineType = lineType;
+    }
+    
+    /**
+     * setter
+     * @param lineType is the name of an audio device. This can be got from getTargetDataLine()
+     */
+    public void setLineType(String lineType){
+    	mLineName = lineType;
     }
     
     public void setDuration(long durationInSecond) {
@@ -99,6 +132,8 @@ public class Recorder {
         try {
         	// format describes only WAV information
             AudioFormat format = getAudioFormat();
+            
+            // todo:delete START ----
             DataLine.Info info;
             switch(mLineType) {
             case LINE_OUT:
@@ -106,29 +141,41 @@ public class Recorder {
                     System.out.println("Info.LINE_OUT is not supported");
                     return -1;
                 }
-                line = (TargetDataLine) AudioSystem.getLine(Port.Info.LINE_OUT);
+                mLine = (TargetDataLine) AudioSystem.getLine(Port.Info.LINE_OUT);
             	break;
             case SPEAKER:
                 if(!AudioSystem.isLineSupported(Port.Info.SPEAKER)){
                     System.out.println("Info.Speaker is not supported");
                     return -1;
                 }
-                line = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
+                mLine = (TargetDataLine) AudioSystem.getLine(Port.Info.SPEAKER);
             	break;
-            default:
+            case SYSTEM:
            	    info = new DataLine.Info(TargetDataLine.class, format);
            	    if (!AudioSystem.isLineSupported(info)) {
                     System.out.println("Line not supported");
                     return -1;
            	    }
-            	line = (TargetDataLine) AudioSystem.getLine(info);
+            	mLine = (TargetDataLine) AudioSystem.getLine(info);
+            	break;
+            default: 
+            	// do nothing when type is NONE
             }
-            line.open(format);
-            line.start();   // start capturing
+            // todo: delete END ---
+            if( mLineName != null && mTargetDataLineHash.containsKey( mLineName ) ) {
+                mLine = mTargetDataLineHash.get( mLineName );
+            } else if(mTargetDataLineHash != null && !mTargetDataLineHash.isEmpty()){
+            	String[] array = (String[])mTargetDataLineHash.keySet().toArray();
+            	mLine = mTargetDataLineHash.get(array[0]);
+            } else {
+            	return -1;
+            }
+            mLine.open(format);
+            mLine.start();   // start capturing
  
             System.out.println("Start capturing...");
  
-            AudioInputStream ais = new AudioInputStream(line);
+            AudioInputStream ais = new AudioInputStream(mLine);
  
             System.out.println("Start recording...");
  
@@ -149,17 +196,16 @@ public class Recorder {
      * Closes the target data line to finish capturing and recording
      */
     void finish() {
-        line.stop();
-        line.close();
+        mLine.stop();
+        mLine.close();
         System.out.println("Finished");
     }
     
-    // Experimental cord
-    private TargetDataLine getTargetDataLine() {
-        return getTargetDataLine( null );
-    }
-    private TargetDataLine getTargetDataLine( String aMixerName ) {
-        Hashtable<String,TargetDataLine> targetDataLineHash = new Hashtable<String,TargetDataLine>();
+    /**
+     * creates mTargetDataLineHash.
+     */
+    private void initTargetDataLine( ) {
+        mTargetDataLineHash = new Hashtable<String,TargetDataLine>();
         Mixer.Info[] mixerInfoList = AudioSystem.getMixerInfo();
         for( Mixer.Info info : mixerInfoList ) {
             //String name = info.getName();
@@ -175,43 +221,26 @@ public class Recorder {
                     Line line = mixer.getLine(i);
                     if( line instanceof TargetDataLine ) {
                         //System.out.println( "\tOK" ); // input
-                        targetDataLineHash.put( info.getName(), (TargetDataLine)line );
+                        mTargetDataLineHash.put( info.getName(), (TargetDataLine)line );
                     }
                 } catch ( LineUnavailableException e ) {
                     e.printStackTrace();
                 }
             }
         }
-
-        TargetDataLine line = null;
-        if( aMixerName != null && targetDataLineHash.containsKey( aMixerName ) ) {
-            line = targetDataLineHash.get( aMixerName );
-        } else {
-            System.out.println( "使用可能なデバイス一覧" );
-            Object[] mixerNames = targetDataLineHash.keySet().toArray();
-            for( int i = 0; i < mixerNames.length; i++ ) {
-                System.out.println( " " + i + ". " + mixerNames[i] );
-            }
-            System.out.print( "使用するデバイスの番号を入力してください: " );
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            int number = 0;
-            try {
-                do {
-                    String n = br.readLine();
-                    number = Integer.parseInt(n);
-                    if( number < 0 || mixerNames.length <= number ) {
-                        System.out.println( "入力された値の範囲が無効です. 再度入力してください: " );
-                    } else {
-                        break;
-                    }
-                } while(true);
-            } catch( Exception e ) {
-                System.err.println( "エラーが発生したので 0 番に設定します." );
-                number = 0;
-            }
-            line = targetDataLineHash.get( mixerNames[number] );
+        System.out.println( "supported devices:" );
+        for(String name : mTargetDataLineHash.keySet()){
+        	System.out.println(name);
         }
-        return line;
+    }
+    
+    /**
+     * gets an array that contains supported device name.
+     * @return names
+     */
+    public String[] getTargetDataLine() {
+    	String[] names = (String[]) mTargetDataLineHash.keySet().toArray();
+    	return names;
     }
     
 }
