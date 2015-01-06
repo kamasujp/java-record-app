@@ -247,8 +247,7 @@ public class Recorder {
      * @return names
      */
     public String[] getTargetDataLine() {
-    	String[] names = (String[]) mTargetDataLineHash.keySet().toArray();
-    	return names;
+    	return (String[]) mTargetDataLineHash.keySet().toArray(new String[0]);
     }
     
 }
