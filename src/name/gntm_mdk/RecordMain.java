@@ -29,6 +29,7 @@ public class RecordMain extends Frame implements ActionListener{
 	private static final String SETTING_FILE_NAME = "property.conf";
 	private static final String SETTING_KEY_URI = "setting_key_uri";
 	private static final String SETTING_KEY_TYPE = "setting_key_type";
+	private static final String SETTING_KEY_DURATION = "setting_key_duration";
 
 	private Recorder mRecorder;
 	private Thread mThread;
@@ -180,11 +181,34 @@ public class RecordMain extends Frame implements ActionListener{
 		add(durationLabel);
 
 		Choice durationChoice = new Choice();
-		for(int d = 15; d < 100; d+=15){
+		int selected = 0;
+		int defaultDuration = Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION));
+		for(int d = 15; d < 60; d+=15){
 			durationChoice.add(String.valueOf(d).concat(" mins"));
+			if (d == defaultDuration){
+				// TODO: here
+				//selected = ;
+			}
 		}
-		durationChoice.add("infinite");
+		for(int d = 60; d <= 300; d+=60){
+			durationChoice.add(String.valueOf(d).concat(" mins"));
+			if (d == defaultDuration){
+				selected = d;
+			}
+		}
+		durationChoice.select(selected);
+		//durationChoice.add("infinite");
 		add(durationChoice);
+		durationChoice.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				// TODO Auto-generated method stub
+				int min = Integer.parseInt(e.getItem().toString().replace(" mins", ""));
+				System.out.println("duration :"+ min);
+				prop.setProperty(SETTING_KEY_DURATION, min + "");
+				save();
+			}
+		});
 	}
 
 	private void updateCheckBox(boolean isChecked){
@@ -225,6 +249,7 @@ public class RecordMain extends Frame implements ActionListener{
 
 		mRecorder.setUri(prop.getProperty(SETTING_KEY_URI));
 		mRecorder.setLineType(fromOrdinal(Recorder.LINE_TYPE.class, Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE))));
+		mRecorder.setDuration(Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION)));
 	}
 	private Recorder load(){
 		try {
@@ -236,6 +261,7 @@ public class RecordMain extends Frame implements ActionListener{
 			System.out.println("default file path :"+path);			
 			prop.setProperty(SETTING_KEY_URI, path);		
 			prop.setProperty(SETTING_KEY_TYPE, Recorder.LINE_TYPE.SPEAKER.ordinal()+"");
+			prop.setProperty(SETTING_KEY_DURATION, "180");
 			save();
 		}
 		Recorder r = new Recorder(
