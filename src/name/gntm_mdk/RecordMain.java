@@ -2,7 +2,6 @@ package name.gntm_mdk;
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
-import java.awt.Dialog;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -22,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class RecordMain extends Frame implements ActionListener{
@@ -33,6 +33,7 @@ public class RecordMain extends Frame implements ActionListener{
 
 	private Recorder mRecorder;
 	private Thread mThread;
+	private String[] inputs;
 	Label mHourLabel;
 	Label mMinuteLabel;
 	Label mPathLabel;
@@ -41,7 +42,7 @@ public class RecordMain extends Frame implements ActionListener{
 	boolean mIsImmediate = false;
 
 	private Properties prop;
-
+	
 
 	/**
 	 * @param args
@@ -102,17 +103,21 @@ public class RecordMain extends Frame implements ActionListener{
 		// UI layouting
 		setLayout(new FlowLayout());
 
+		
+		/* Line Select */
 		Label lineLabel = new Label("Line:");
 		add(lineLabel);
 		Choice lineChoice = new Choice();
-		final ArrayList<String> list = new ArrayList<String>();
-		list.add("LINE_OUT");
-		list.add("SPEAKER");
-		list.add("Line");
+		final ArrayList<String> list = new ArrayList<String>(Arrays.asList(mRecorder.getTargetDataLine()));
 		for (String s : list){
 			lineChoice.add(s);
 		}
-		lineChoice.select(Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE)));
+		int def = Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE));
+		if (list.size() <= def){
+			lineChoice.select(0);			
+		}else{
+			lineChoice.select(def);
+		}
 		lineChoice.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -249,7 +254,7 @@ public class RecordMain extends Frame implements ActionListener{
 		
 
 		mRecorder.setUri(prop.getProperty(SETTING_KEY_URI));
-		mRecorder.setLineType(fromOrdinal(Recorder.LINE_TYPE.class, Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE))));
+		mRecorder.setLineType(inputs[Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE))]);
 		mRecorder.setDuration(Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION)));
 	}
 	private Recorder load(){
@@ -261,13 +266,12 @@ public class RecordMain extends Frame implements ActionListener{
 			String path = new File(".").getAbsoluteFile().getParent() + "/"+DEFAULT_FILE_NAME;
 			System.out.println("default file path :"+path);			
 			prop.setProperty(SETTING_KEY_URI, path);		
-			prop.setProperty(SETTING_KEY_TYPE, Recorder.LINE_TYPE.SPEAKER.ordinal()+"");
+			prop.setProperty(SETTING_KEY_TYPE, "0");
 			prop.setProperty(SETTING_KEY_DURATION, "180");
-			save();
 		}
-		Recorder r = new Recorder(
-				prop.getProperty(SETTING_KEY_URI) ,
-				fromOrdinal(Recorder.LINE_TYPE.class, Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE))));
+		Recorder r = new Recorder();
+		inputs = r.getTargetDataLine();
+		save();
 		return r;
 	}
 

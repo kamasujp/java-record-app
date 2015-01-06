@@ -55,11 +55,19 @@ public class Recorder {
      * @param uri contains the location to save wave file.
      * @lineType is the name of an audio device. This can be got from getTargetDataLine()
      */
+    @Deprecated
     public Recorder( String uri,String lineType ){
     	mLineName = lineType;
     	if(null != uri){
     		mWavFile = new File(uri);
     	}
+    	initTargetDataLine();
+    }
+
+    /** 
+     * constructor
+     */
+    public Recorder(){
     	initTargetDataLine();
     }
     
