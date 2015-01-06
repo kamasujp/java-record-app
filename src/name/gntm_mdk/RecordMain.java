@@ -58,7 +58,7 @@ public class RecordMain extends Frame implements ActionListener{
 		super();
 		// load default settings
 		prop = new Properties();
-		mRecorder = load();
+		load();
 
 		//ウィンドウを閉じる時
 		addWindowListener(new WindowAdapter() {
@@ -251,13 +251,18 @@ public class RecordMain extends Frame implements ActionListener{
 		} catch (IOException e1) {
 			System.out.println("save failed : IO blocked");
 		}
-		
 
 		mRecorder.setUri(prop.getProperty(SETTING_KEY_URI));
-		mRecorder.setLineType(inputs[Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE))]);
-		mRecorder.setDuration(Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION)));
+		int index = Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE));
+		try {
+			mRecorder.setLineType(inputs[index]);
+		}catch (ArrayIndexOutOfBoundsException e){
+			System.out.println("line index "+index+" is out of range. select default : "+inputs[0]);
+			mRecorder.setLineType(inputs[0]);
+		}
+		mRecorder.setDuration(60*1000*Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION)));
 	}
-	private Recorder load(){
+	private void load(){
 		try {
 			prop.load(new FileInputStream(SETTING_FILE_NAME));
 		} catch (IOException e) {
@@ -269,10 +274,9 @@ public class RecordMain extends Frame implements ActionListener{
 			prop.setProperty(SETTING_KEY_TYPE, "0");
 			prop.setProperty(SETTING_KEY_DURATION, "180");
 		}
-		Recorder r = new Recorder();
-		inputs = r.getTargetDataLine();
+		mRecorder = new Recorder();
+		inputs = mRecorder.getTargetDataLine();
 		save();
-		return r;
 	}
 
 	public static <E extends Enum<E>> E fromOrdinal(Class<E> enumClass, int ordinal) {
