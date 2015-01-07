@@ -116,6 +116,13 @@ public class Recorder {
     }
  
     public void start(){
+    	// creates a new thread to record sound
+    	Thread recordingThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				recStart();
+			}
+		});
 		// creates a new thread that waits for a specified
 		// of time before stopping
 		Thread stopper = new Thread(new Runnable() {
@@ -129,10 +136,11 @@ public class Recorder {
 			}
 		});
 
+		recordingThread.start();
 		stopper.start();
 
 		// start recording
-		recStart();
+		//recStart();
     }
     
     /**
