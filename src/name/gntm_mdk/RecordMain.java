@@ -30,6 +30,9 @@ public class RecordMain extends Frame implements ActionListener{
 	private static final String SETTING_KEY_URI = "setting_key_uri";
 	private static final String SETTING_KEY_TYPE = "setting_key_type";
 	private static final String SETTING_KEY_DURATION = "setting_key_duration";
+	private enum RecState{
+		Prepare, Standby , Rec
+	}
 
 	private Recorder mRecorder;
 	private Thread mThread;
@@ -39,10 +42,13 @@ public class RecordMain extends Frame implements ActionListener{
 	Label mPathLabel;
 	Choice mMinuteChoice;
 	Choice mHourChoice;
+	Button mRecordButton;
+	Checkbox mImmediateCheck;
 	boolean mIsImmediate = false;
 
 	private Properties prop;
-	
+	private RecState state = RecState.Prepare;
+
 
 	/**
 	 * @param args
@@ -147,14 +153,14 @@ public class RecordMain extends Frame implements ActionListener{
 		}
 		add(mMinuteChoice);
 
-		final Checkbox checkBox = new Checkbox("Immediately");
-		checkBox.addItemListener(new ItemListener() {
+		mImmediateCheck = new Checkbox("Immediately");
+		mImmediateCheck.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				updateCheckBox(e.getStateChange()==1);
 			}
 		});
-		add(checkBox);
+		add(mImmediateCheck);
 
 
 		mPathLabel = new Label("保存先:"+prop.getProperty(SETTING_KEY_URI));
@@ -169,18 +175,23 @@ public class RecordMain extends Frame implements ActionListener{
 		});
 		add(srcButton);
 
-		Button recordButton = new Button("Rec");
-		recordButton.setSize(300, 50);
-		recordButton.addActionListener(new ActionListener() {			
+		mRecordButton = new Button("Rec");
+		state = RecState.Prepare;
+		updateState();
+		mRecordButton.setSize(300, 50);
+		mRecordButton.addActionListener(new ActionListener() {			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if (checkBox.getState()){
-					showDialog("録音を開始します。");
+				if (state == RecState.Prepare){
+					StartRec();
+				}else if (state == RecState.Standby){
+					StopWait();
+				}else{
+					StopRec();
 				}
-				mRecorder.start();
 			}
 		});
-		add(recordButton);
+		add(mRecordButton);
 
 		Label durationLabel = new Label("duration");
 		add(durationLabel);
@@ -217,6 +228,37 @@ public class RecordMain extends Frame implements ActionListener{
 		});
 	}
 
+
+	private void updateState(){
+		if (state == RecState.Prepare){
+			mRecordButton.setLabel("録音開始");
+		}else if(state == RecState.Standby){
+			mRecordButton.setLabel("予約取消");
+		}else{
+			mRecordButton.setLabel("録音終了");
+		}
+	}
+	private void StartRec(){
+		if (mImmediateCheck.getState()){
+			state = RecState.Rec;
+			updateState();
+			mRecorder.start();
+		}else{
+			state = RecState.Standby;
+		}
+		updateState();
+	}
+	private void StopRec(){
+		mRecorder.stop();
+		state = RecState.Prepare;
+		updateState();
+	}
+	private void StopWait(){
+		state = RecState.Prepare;
+		updateState();
+	}
+	
+	
 	private void updateCheckBox(boolean isChecked){
 		System.out.println("changed" + isChecked);
 		mHourChoice.setEnabled(!isChecked);
@@ -256,8 +298,9 @@ public class RecordMain extends Frame implements ActionListener{
 		int index = Integer.parseInt(prop.getProperty(SETTING_KEY_TYPE));
 		try {
 			mRecorder.setLineType(inputs[index]);
+			System.out.println("[Mic] setLineType : "+inputs[index]);
 		}catch (ArrayIndexOutOfBoundsException e){
-			System.out.println("line index "+index+" is out of range. select default : "+inputs[0]);
+			System.out.println("[Mic] line index "+index+" is out of range. setLineType : "+inputs[0]);
 			mRecorder.setLineType(inputs[0]);
 		}
 		mRecorder.setDuration(60*1000*Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION)));
