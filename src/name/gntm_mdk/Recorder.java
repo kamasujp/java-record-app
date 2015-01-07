@@ -36,6 +36,8 @@ public class Recorder {
     // contains available device list
     Hashtable<String,TargetDataLine> mTargetDataLineHash;
     
+    RecordStateListener mRecordStateListener;
+    
     /** 
      * constructor. 
      * this method is deprecated due to the issue #1.
@@ -205,6 +207,7 @@ public class Recorder {
      * stops recording.
      */
     public void stop() {
+    	mRecordStateListener.onRecordFinished();
     	finish();
     }
  
