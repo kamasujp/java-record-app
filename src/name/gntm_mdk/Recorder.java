@@ -79,6 +79,9 @@ public class Recorder {
     		createFile(uri);
     	}
     }
+    public void setListener(RecordStateListener listener){
+    	mRecordStateListener = listener;
+    }
     
     @Deprecated
     public void setLineType(LINE_TYPE lineType){

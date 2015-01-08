@@ -65,7 +65,15 @@ public class RecordMain extends Frame implements ActionListener{
 		// load default settings
 		prop = new Properties();
 		load();
-
+		mRecorder.setListener(new RecordStateListener() {
+			@Override
+			public void onRecordFinished() {
+				// TODO Auto-generated method stub
+				state = RecState.Prepare;
+				updateState();
+			}
+		});
+		
 		//ウィンドウを閉じる時
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -200,6 +208,11 @@ public class RecordMain extends Frame implements ActionListener{
 		int selected = 0;
 		int defaultDuration = Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION));
 		int now = 0;
+
+		//Debug
+		durationChoice.add("1 mins");
+		now++;
+		
 		for(int d = 15; d < 60; d+=15){
 			durationChoice.add(String.valueOf(d).concat(" mins"));
 			if (d == defaultDuration){
@@ -240,9 +253,7 @@ public class RecordMain extends Frame implements ActionListener{
 	}
 	private void StartRec(){
 		if (mImmediateCheck.getState()){
-			state = RecState.Rec;
-			updateState();
-			mRecorder.start();
+			Rec();
 		}else{
 			state = RecState.Standby;
 		}
@@ -257,7 +268,11 @@ public class RecordMain extends Frame implements ActionListener{
 		state = RecState.Prepare;
 		updateState();
 	}
-	
+	private void Rec(){
+		state = RecState.Rec;
+		updateState();
+		mRecorder.start();
+	}
 	
 	private void updateCheckBox(boolean isChecked){
 		System.out.println("changed" + isChecked);
