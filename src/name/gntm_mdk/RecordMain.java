@@ -22,7 +22,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RecordMain extends Frame implements ActionListener{
 	private static final String DEFAULT_FILE_NAME = "record.wav";
@@ -49,16 +53,15 @@ public class RecordMain extends Frame implements ActionListener{
 	private Properties prop;
 	private RecState state = RecState.Prepare;
 
+    Calendar RecStartTime;
+    Calendar RecEndTime;
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		RecordMain record = new RecordMain();
 		record.setVisible(true);
-	}
-
+	}    
+	
 	public RecordMain(){
 		// Window initialization
 		super();
@@ -84,6 +87,15 @@ public class RecordMain extends Frame implements ActionListener{
 		buildUi();
 		// other initialization
 		mThread = new Thread();
+		
+		Timer t = new Timer();
+		t.scheduleAtFixedRate(new TimerTask() {
+		  @Override
+		  public void run() {
+			  updateTitle();
+		  }
+		},0,100);
+		
 
 	}
 
@@ -147,7 +159,7 @@ public class RecordMain extends Frame implements ActionListener{
 		mHourLabel = new Label("hour:");
 		add(mHourLabel);
 		mHourChoice = new Choice();
-		for (int h=0; h<13 ;h++) {
+		for (int h=0; h<24 ;h++) {
 			mHourChoice.add(String.valueOf(h));
 		}
 		add(mHourChoice);
@@ -241,21 +253,60 @@ public class RecordMain extends Frame implements ActionListener{
 		});
 	}
 
-
 	private void updateState(){
 		if (state == RecState.Prepare){
-			mRecordButton.setLabel("録音開始");
+			if (mImmediateCheck.getState()){
+				mRecordButton.setLabel("録音開始");
+			}else{
+				mRecordButton.setLabel("　予約　");
+			}
 		}else if(state == RecState.Standby){
 			mRecordButton.setLabel("予約取消");
 		}else{
 			mRecordButton.setLabel("録音終了");
 		}
+		updateTitle();
 	}
+	private void updateTitle(){
+		Calendar now = Calendar.getInstance();
+		
+		if (state == RecState.Prepare){
+			setTitle("録音待機");
+		}else if(state == RecState.Standby){
+			long left = (RecStartTime.getTimeInMillis() - now.getTimeInMillis()) / 1000;
+			if (left < 0){
+				Rec();
+				return;
+			}
+			setTitle("予約中 - 録音まであと" + getDateString(left) );
+		}else{
+			long left = (RecEndTime.getTimeInMillis() - now.getTimeInMillis()) / 1000;
+			setTitle("録音中 - 終了まであと" + getDateString(left) );
+		}
+	}
+	
+	private String getDateString( long left_sec){
+		if (left_sec > 60*60){
+			return (left_sec / (60*60)) + "時間" + ((left_sec % (60*60))/60) + "分" + (left_sec%60)+ "秒";
+		}else if (left_sec > 60){
+			return (left_sec / 60) + "分" + (left_sec % 60) + "秒";
+		}else{
+			return left_sec + "秒";
+		}
+	}
+	
 	private void StartRec(){
 		if (mImmediateCheck.getState()){
 			Rec();
 		}else{
 			state = RecState.Standby;
+			RecStartTime = Calendar.getInstance();
+			RecStartTime.set(Calendar.HOUR_OF_DAY, mHourChoice.getSelectedIndex());
+			RecStartTime.set(Calendar.MINUTE, mMinuteChoice.getSelectedIndex());
+			RecStartTime.set(Calendar.SECOND, 0);
+			if (RecStartTime.before(Calendar.getInstance())){
+				RecStartTime.add(Calendar.DATE, 1);
+			}
 		}
 		updateState();
 	}
@@ -270,8 +321,10 @@ public class RecordMain extends Frame implements ActionListener{
 	}
 	private void Rec(){
 		state = RecState.Rec;
-		updateState();
 		mRecorder.start();
+		RecEndTime = Calendar.getInstance();
+		RecEndTime.add(Calendar.MINUTE, Integer.parseInt(prop.getProperty(SETTING_KEY_DURATION)));
+		updateState();
 	}
 	
 	private void updateCheckBox(boolean isChecked){
@@ -279,6 +332,7 @@ public class RecordMain extends Frame implements ActionListener{
 		mHourChoice.setEnabled(!isChecked);
 		mMinuteChoice.setEnabled(!isChecked);
 		mIsImmediate = isChecked;
+		updateState();
 	}
 
 
