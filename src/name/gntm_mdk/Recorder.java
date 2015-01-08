@@ -218,7 +218,6 @@ public class Recorder {
      * stops recording.
      */
     public void stop() {
-    	mRecordStateListener.onRecordFinished();
     	finish();
     }
  
@@ -228,6 +227,7 @@ public class Recorder {
     void finish() {
         mLine.stop();
         mLine.close();
+    	mRecordStateListener.onRecordFinished();
         System.out.println("Finished");
     }
     

@@ -34,6 +34,8 @@ public class RecordMain extends Frame implements ActionListener{
 	private static final String SETTING_KEY_URI = "setting_key_uri";
 	private static final String SETTING_KEY_TYPE = "setting_key_type";
 	private static final String SETTING_KEY_DURATION = "setting_key_duration";
+	private static final String SETTING_KEY_HOUR = "setting_key_hour";
+	private static final String SETTING_KEY_MINUTE = "setting_key_minute";
 	private enum RecState{
 		Prepare, Standby , Rec
 	}
@@ -72,6 +74,7 @@ public class RecordMain extends Frame implements ActionListener{
 			@Override
 			public void onRecordFinished() {
 				// TODO Auto-generated method stub
+				System.out.println("FINISH");
 				state = RecState.Prepare;
 				updateState();
 			}
@@ -80,6 +83,11 @@ public class RecordMain extends Frame implements ActionListener{
 		//ウィンドウを閉じる時
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
+				if (mHourChoice != null){
+					prop.setProperty(SETTING_KEY_HOUR, mHourChoice.getSelectedIndex()+"");
+					prop.setProperty(SETTING_KEY_MINUTE, mMinuteChoice.getSelectedIndex()+"");
+					save();
+				}
 				System.exit(0);
 			}
 		});
@@ -158,11 +166,15 @@ public class RecordMain extends Frame implements ActionListener{
 
 		mHourLabel = new Label("hour:");
 		add(mHourLabel);
+		
 		mHourChoice = new Choice();
 		for (int h=0; h<24 ;h++) {
 			mHourChoice.add(String.valueOf(h));
 		}
 		add(mHourChoice);
+		if (prop.getProperty(SETTING_KEY_HOUR) != null){
+			mHourChoice.select( Integer.parseInt(prop.getProperty(SETTING_KEY_HOUR)));
+		}
 
 		mMinuteLabel = new Label();
 		mMinuteLabel.setText("minute");
@@ -172,7 +184,10 @@ public class RecordMain extends Frame implements ActionListener{
 			mMinuteChoice.add(String.valueOf(m));
 		}
 		add(mMinuteChoice);
-
+		if (prop.getProperty(SETTING_KEY_MINUTE) != null){
+			mMinuteChoice.select( Integer.parseInt(prop.getProperty(SETTING_KEY_MINUTE)));
+		}
+		
 		mImmediateCheck = new Checkbox("Immediately");
 		mImmediateCheck.addItemListener(new ItemListener() {
 			@Override
