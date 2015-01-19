@@ -23,12 +23,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class RecordMain extends Frame implements ActionListener{
+	private static final long serialVersionUID = 1L;
 	private static final String DEFAULT_FILE_NAME = "record.wav";
 	private static final String SETTING_FILE_NAME = "property.conf";
 	private static final String SETTING_KEY_URI = "setting_key_uri";
@@ -41,7 +41,7 @@ public class RecordMain extends Frame implements ActionListener{
 	}
 
 	private Recorder mRecorder;
-	private Thread mThread;
+	//private Thread mThread;
 	private String[] inputs;
 	Label mHourLabel;
 	Label mMinuteLabel;
@@ -94,7 +94,6 @@ public class RecordMain extends Frame implements ActionListener{
 		setSize(600, 200);
 		buildUi();
 		// other initialization
-		mThread = new Thread();
 		
 		Timer t = new Timer();
 		t.scheduleAtFixedRate(new TimerTask() {
